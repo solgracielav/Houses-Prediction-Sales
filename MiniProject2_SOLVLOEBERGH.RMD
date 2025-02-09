@@ -1,0 +1,283 @@
+---
+title: "Mini Project 2"
+author: "Emily Buchanan, Zachary Fahrendorff, Lori Frager, and Sol Graciela Vloebergh"
+output: html_document
+date: "2024-09-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE, message=FALSE}
+house_sales <- read.csv("/Users/solgracielav/Desktop/CLEMSON/SEMESTER 1/S2408-DSA-8010 Statistical Methods I - 401 - 86445/MINI PROJECT 2/pierce_co_house_sales.csv", header=TRUE)
+library(ggplot2)
+library(dplyr)
+```
+
+# Part 1: Can sales price be predicted?
+
+## 1. Basement Square Feet & Sale Price
+
+```{r, echo=FALSE}
+hist(house_sales$basement_square_feet, main = "Size of Basements (sq.ft.)", xlab = "Basements by sq.ft." )
+```
+
+This histogram was done so I could get a sense of what the data was showing us.  It definitely shows that there are a lot of homes with no basement and when I try to get the mean and median of the total information, it doesn't make a lot of sense. Because of that, we will divide the basement_sq_foot group into 2 groups. Homes with basements and homes without.
+
+Let's first see how many homes do not have a basement out of the whole set.
+
+```{r}
+sum(house_sales$basement_square_feet==0)
+sum(house_sales$sale_price>0)
+```
+
+There are 7675 homes without a basement of the 9200 homes in the whole data set.
+We will first look at the 1525 homes with basements.
+
+```{r echo=FALSE}
+nobasement <- subset(house_sales, basement_square_feet ==0)
+withbasement <- subset(house_sales, basement_square_feet > 0)
+```
+
+```{r echo = FALSE}
+hist(withbasement$basement_square_feet, main="Homes with basements (sq ft)", xlab = "Basement (Sq ft)", ylab= "Frequency", breaks= 30)
+```
+
+Now that we just look at the homes with basements, this histogram shows us a much better picture of the distribution of basement sizes. The majority of them are 2000 sq. ft. or less but it is definitely skewed to the right with several homes with very large basements. 
+
+```{r echo=FALSE}
+summary (withbasement$basement_square_feet)
+```
+
+The median size of the basements is 992 sq ft, while the mean is 1031 sq ft. 
+
+```{r echo=FALSE}
+plot(withbasement$basement_square_feet, withbasement$sale_price, main="Homes with basements (size vs price)", xlab = "Size of Basement (Sq.Ft.)", ylab= "Sale Price $")
+```
+
+You can see in the above graph that the majority of the homes are under the $1 Million dollar range and have basements of 2000 sq ft or less. 
+
+```{r echo = FALSE}
+options(scipen = 999)
+boxplot(nobasement$sale_price,withbasement$sale_price, main="Homes with no basement vs Homes with a basement", xlab="Homes with no basement            Homes with a basement", ylab = "Price for Home$")
+```
+
+#### Homes with Basements
+
+Mean, Median and Standard Deviation
+```{r echo=FALSE}
+mean(withbasement$sale_price)
+median(withbasement$sale_price)
+sd(withbasement$sale_price)
+
+summary (withbasement$sale_price)
+
+```
+
+
+#### Homes without Basements
+
+Mean, Median and Standard Deviation
+```{r echo=FALSE}
+mean(nobasement$sale_price)
+median(nobasement$sale_price)
+sd (nobasement$sale_price)
+summary (nobasement$sale_price)
+
+```
+
+The mean of the price of the house with a basement is $560K with the median price of $480K. The most expensive house at $3.53 millon which is more than 3 standard deviations from the mean. You can see the mean price of a house with no basement ($446K) is more than $100,000 less than a house with a basement but we have at least one home that is more than $6 million again more than 3 standard deviations from the mean. By dividing the homes into 2 different groups, as shown in the boxplot, it is easy to see the that IQR for the homes with a basement is higher than the ones without a basement and the number of outliers that the 2 groups have. Since most homes have a 2000 sq ft basement or less, lets see what that mean is on the price of the home vs a larger than 2000 sq ft basement.
+
+
+```{r echo=FALSE}
+tapply(withbasement$sale_price, factor(withbasement$basement_square_feet<=2000, labels=c("Mean > 2000 sqft", "Mean <= 2000 sqft")), mean)
+```
+
+The mean price of a house with a basement 2000 sq. ft. or less is $543K while the mean price for those over a 2000 sq ft basement is almost $1 million. 
+
+However, some of the most expensive homes in the data set do not have a basement.
+
+Lets find the correlation:
+
+```{r echo=FALSE}
+cor(house_sales$basement_square_feet,house_sales$sale_price)
+cor(withbasement$basement_square_feet,withbasement$sale_price)
+```
+
+When we do the correlation analysis, the r value (0.258) for all the homes, whether they have a basement or not, is positive and weak so there is not much correlation between the two.  
+The homes with a basement, have a little higher correlation (0.397) than the whole data set, this indicates that the addition of a basement may result in an increased sales price of the house.
+
+
+## 2. Year Built & Sale Price
+
+### Scatterplots
+```{r echo = FALSE, fig.show="hold", out.width="50%"}
+ggplot(house_sales,mapping=aes(x=year_built,y=sale_price)) + geom_point(color= "blue", size = 1) + labs(title="Sales Price and Year Built", x="Year Built", y="Sales Price")+ scale_x_continuous(breaks= seq(1880, 2021, by=20)) + scale_y_continuous(labels = scales::label_dollar(), breaks = seq(0, 6130000, by = 500000))
+
+ggplot(house_sales,mapping=aes(x=year_built,y=log(sale_price))) + geom_point(color= "blue", size = 1) + labs(title="Log(Sales Price) and Year Built", x="Year Built", y="Log(Sales Price)")+ scale_x_continuous(breaks= seq(1880, 2021, by=20))
+```
+
+
+### Correlation between Sale Price and Year Built
+```{r,include=FALSE}
+cor(house_sales$year_built, house_sales$sale_price, use='complete.obs')
+cor(house_sales$year_built, log(house_sales$sale_price), use='complete.obs')
+```
+
+Above are two scatterplots showing the relationship between the variables Sales Price and Year Built. When looking at the scatterplot on the left, the data appears to have a slight curvature in the plot suggesting that the relationship between these two variables is non-linear. Therefore, we can transform the sales price variable using the log function, and when plotting the variables now, get the scatterplot above on the right. When calculating correlation between the log of the sales price and year built the value is 0.325, this indicates that the there is a weak positive correlation between the sales price and the year built variables.
+
+## 3. Bedrooms & Sale Price
+
+### Summary statistics for sale price by number of bedrooms
+```{r, echo=FALSE}
+bedroom_summary <- house_sales %>%
+  group_by(bedrooms) %>%
+  summarise(
+    mean_price = mean(sale_price, na.rm = TRUE),
+    median_price = median(sale_price, na.rm = TRUE),
+    sd_price = sd(sale_price, na.rm = TRUE),
+    count = n()
+  )
+print(bedroom_summary)
+```
+
+The summary statistics show that properties with more bedrooms tend to have higher average sale prices. This initially indicates that the number of bedrooms appears to be positively associated with property value.
+
+### Boxplot of sale price by number of bedrooms
+```{r, echo= FALSE}
+ggplot(house_sales, aes(x = factor(bedrooms), y = sale_price)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Sale Price by Number of Bedrooms",
+       x = "Number of Bedrooms",
+       y = "Sale Price ($)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(hjust = 1))
+```
+
+The association between the number of bedrooms and sale price shows that homes with more bedrooms generally have higher sale prices. For example, 4-bedroom homes have a median price of $470,000, while 2-bedroom homes have a median of $325,000. However, there is considerable variability within each category, with outliers, particularly in homes with 0 or 1 bedrooms, impacting the overall correlation. The boxplot highlights this trend, showing that properties with more bedrooms have a broader IQR, suggesting potential market segmentation based on property size. Outliers in homes with 0, 1, and 2 bedrooms likely affect the correlation (R) value.
+
+### Correlation analysis
+```{r, echo=FALSE}
+cor(house_sales$bedrooms, house_sales$sale_price, use = "complete.obs")
+```
+
+The correlation between the number of bedrooms and sale price is weakly positive, with a value of approximately 0.20. This suggests that while homes with more bedrooms tend to have higher sale prices, the relationship is not particularly strong. Other factors may play a more significant role in determining the sale price.
+
+
+# Part 2: Is missingness informative?
+
+#### FYI: Our group had different ways of creating the view_missing dummy variable.
+
+## 1. Fireplaces & View Missingness
+```{r, echo=FALSE, include=FALSE}
+sales2 <- read.csv("/Users/solgracielav/Desktop/CLEMSON/SEMESTER 1/S2408-DSA-8010 Statistical Methods I - 401 - 86445/MINI PROJECT 2/pierce_co_house_sales.csv", na.strings = "")
+view_miss <- sales2$view_quality
+head(view_miss)
+sum(is.na(view_miss))
+
+```
+
+Below is a table that has the number of fireplaces and whether or not those observations had a value in the view_quality variable. False indicates that the variable had an observation and true indicates that the value was missing. 
+
+```{r, echo=FALSE}
+t1 <- table(house_sales$fireplaces, is.na(view_miss))
+t1
+```
+
+
+```{r, echo=FALSE, out.width="50%"}
+barplot(table(is.na(view_miss),house_sales$fireplaces), main="Bar Plot of Fireplaces and Missing Values in View Quality", ylab="Frequency", xlab="Number of Fireplaces")
+
+```
+
+Above is a bar plot that visually shows the values in the table. The dark grey portion of the bar indicates that there is a value in view_quality and the light grey represents a missing value in view_quality.
+
+#### Proportion Table
+
+```{r, echo=FALSE}
+round(prop.table(t1, margin=1),3) # row proportions
+```
+
+The data set has a total of 9200 observations and of those observations, 8690 of them had missing values for view_quality. Above is a proportion table showing the row proportions between fireplaces and whether or not a value  was missing in view_quality. Due to the large number of observations containing a missing value for view_quality, of houses with 0, 1, 2, and 4 fireplaces only between 2.4% and 13.1% of those observations had a value in view_quality. However, 35.5% of houses with 3 fireplaces and 33.3% of houses with 5 fireplaces had a value for the view_quality, which are larger proportions compared to the other rows. This could be because there were not many houses sold that had 3-5 fireplaces. Because of this, we would need more data to see if there was an association between the number of fireplaces a house has and whether or not the view_quality value is missing.  
+
+
+## 2. HVAC Description & View Missingness
+
+First I created a dummy variable where '1' means the view quality field was filled out and a '0' means no data for this measure was entered.
+
+```{r, echo=FALSE}
+house_sales$dummy_view <- ifelse(house_sales$view_quality != '',1,0)
+
+table(house_sales$dummy_view)
+```
+We see only 510 out of 9200 (5.5%) homes have this view quality information included.
+
+Next I am going to explore if the HVAC description field has any notable association on whether or not the view quality field was filled out or not. To begin, here is a table of the types of HVAC units with the counts of whether or not view quality was entered.
+
+```{r, echo=FALSE}
+hvac_table <- table(house_sales$hvac_description,house_sales$dummy_view)
+hvac_table
+```
+Next, a bar plot and a proportion table to assist with contextualizing and scaling the counts.
+
+```{r, echo= FALSE}
+ggplot(house_sales, aes(x=hvac_description, fill = as.factor(dummy_view))) +
+  geom_bar()+
+  labs(title = 'Bar Plot of HVAC Systems Descriptions',
+       x = 'HVAC Descriptions', y = 'Frequency', fill = 'View Missing (0)\nView Not Missing (1)') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r, echo=FALSE}
+round(prop.table(hvac_table, margin = 1), 3)
+```
+
+From this chart and proportion table we can identify a couple interesting associations. View quality missingness is very common with Forced Air and Electric Baseboard HVAC systems. Which, as can be seen in the chart, are the top 2 HVAC systems used in the total sample of 9,200 houses.  However, View quality missingness for the Heat pump and Warm & Cool Air Zone systems, the 3rd and 4th most common HVAC systems in our sample respectively, is about 10% lower than first 2 systems mentioned. This leads us to believe there is some small association between view quality missingness and the top 4 HVAC systems used.  It is important to note that some HVAC systems have much higher and lower percentages but their sample sizes are too small to justify making any association claims.
+
+## 3. Bathrooms & View Missingness
+
+Missing values in 'view_quality' are represented as empty strings (`''`). I created a binary variable, 'view_miss', to indicate whether the view quality is missing and examine its relationship with the 'bathrooms' variable.
+
+```{r, echo = FALSE}
+house_sales$view_miss <- ifelse(house_sales$view_quality == '', 0, 1)
+head(house_sales$view_miss)
+```
+
+```{r, echo = FALSE}
+sum(is.na(house_sales$bathrooms))
+```
+
+
+#### Explore the association between 'bathrooms' and the binary variable
+```{r, echo = FALSE}
+bathrooms_view_miss_crosstab <- table(house_sales$view_miss, house_sales$bathrooms)
+print(bathrooms_view_miss_crosstab)
+```
+
+The first row (view_miss = 0) shows the number of homes with different numbers of bathrooms where view quality is missing. The second row (view_miss = 1) shows the number of homes with different numbers of bathrooms where view quality is not missing. 
+
+#### Association between bathrooms and miss_view variable
+```{r, echo = FALSE}
+barplot(table(house_sales$view_miss, house_sales$bathrooms),
+        main = "Association between Bathrooms and Missing View Quality",
+        xlab = "Number of Bathrooms",
+        ylab = "Frequency",
+        col = c("lightblue", "orange"),
+        legend = c("View Missing", "View Not Missing"))
+```
+
+The light blue bar represents homes where view_miss = 0 (view quality is missing) and the orange bar represents homes where view_miss = 1 (view quality is not missing). This plot helps to visualize if the missingness of view quality is related to the number of bathrooms. It is clear that homes with fewer bathrooms have a higher volume of missing view quality values, however, it is important to check if missingness is proportionally even across the number of bathrooms.
+
+
+#### Proportion table
+```{r, echo = FALSE}
+view_bath_table <- table(house_sales$view_miss, house_sales$bathrooms)
+round(prop.table(view_bath_table, margin = 2), 3)
+```
+
+When we look at the data proportionally we actually see that homes sold with 4-6 bathrooms tend to have about 10% higher rates of the view quality field being filled out when compared to the 1-3 bathroom homes.  Granted we have very few homes in the 5-6 bathroom range so we need to be careful with any assumptions we conclude from that data.
+
+### Resources
+R for Data Science (2e)- Wickham, Cetinkaya-Rundel, and Grolemund

@@ -1,0 +1,104 @@
+#MINI PROJECT 2 - SOL VLOEBERGH
+
+#Data
+```{r}
+house_sales <- read.csv("/Users/solgracielav/Desktop/CLEMSON/SEMESTER 1/S2408-DSA-8010 Statistical Methods I - 401 - 86445/MINI PROJECT 2/pierce_co_house_sales.csv")
+library(dplyr)
+library(ggplot2)
+```
+
+#PART 1
+
+# Summary statistics for sale price by number of bedroom
+```{r}
+bedroom_summary <- house_sales %>%
+  group_by(bedrooms) %>%
+  summarise(
+    mean_price = mean(sale_price, na.rm = TRUE),
+    median_price = median(sale_price, na.rm = TRUE),
+    sd_price = sd(sale_price, na.rm = TRUE),
+    count = n()
+  )
+print(bedroom_summary)
+```
+# The summary statistics show that properties with more bedrooms tend to have higher average sale prices. This indicates that the number of bedrooms is positively associated with property value.
+
+# Boxplot of sale price by number of bedrooms
+```{r}
+ggplot(house_sales, aes(x = factor(bedrooms), y = sale_price)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Sale Price by Number of Bedrooms",
+       x = "Number of Bedrooms",
+       y = "Sale Price ($)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+# The association between the number of bedrooms and sale price reveals that homes with more bedrooms tend to have higher sale prices. For instance, homes with 4 bedrooms have a median sale price of $470,000, while those with 2 bedrooms have a median of $325,000. However, the variability within each bedroom category is considerable, with extreme values in smaller bedroom categories indicating the presence of outliers, such as properties with 0 or 1 bedroom. The boxplot highlights this pattern, showing the spread of prices across different bedroom counts.
+
+# Correlation analysis
+```{r}
+cor(house_sales$bedrooms, house_sales$sale_price, use = "complete.obs")
+```
+
+##The correlation between the number of bedrooms and sale price is weakly positive, with a value of approximately 0.20. This suggests that while homes with more bedrooms tend to have higher sale prices, the relationship is not particularly strong. Other factors may play a more significant role in determining the sale price.
+
+#PART 2
+## Now, in the second part of this report, we will investigate the association between the number of bathrooms and missing values in the 'view_quality' variable. Missing values in 'view_quality' are represented as empty strings (`''`). We create a binary variable, 'view_miss', to indicate whether the view quality is missing and examine its relationship with the 'bathrooms' variable.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+house_sales <- read.csv("/Users/solgracielav/Desktop/CLEMSON/SEMESTER 1/S2408-DSA-8010 Statistical Methods I - 401 - 86445/MINI PROJECT 2/pierce_co_house_sales.csv")
+head(house_sales)
+```
+
+
+#1 Create a binary variable for missing view quality
+```{r}
+house_sales$view_miss <- ifelse(house_sales$view_quality == '', 1, 0)
+head(house_sales$view_miss)
+```
+
+
+#1.1 Missing values in the bathroom variable
+```{r}
+sum(is.na(house_sales$bathrooms))
+```
+
+
+#2. Explore the association between 'bathrooms' and the binary variable
+```{r}
+bathrooms_view_miss_crosstab <- table(house_sales$view_miss, house_sales$bathrooms)
+print(bathrooms_view_miss_crosstab)
+```
+##The first row (view_miss = 0) shows the number of homes with different numbers of bathrooms where view quality is not missing. The second row (view_miss = 1) shows the number of homes with different numbers of bathrooms where view quality is missing.
+
+
+#3. Association between bathrooms and miss_view variable
+```{r}
+barplot(table(house_sales$view_miss, house_sales$bathrooms),
+        main = "Association between Bathrooms and Missing View Quality",
+        xlab = "Number of Bathrooms",
+        ylab = "Frequency",
+        col = c("lightblue", "orange"),
+        legend = c("View Not Missing", "View Missing"))
+```
+
+## This plot helps to visualize if the missingness of view quality is related to the number of bathrooms. It is clear that homes with fewer bathrooms tend to have more missing view quality values. The light blue bar represents homes where view_miss = 0 (view quality is not missing) and the orange bar represents homes where view_miss = 1 (view quality is missing).
+
+
+#4. Proportion table
+```{r}
+view_bath_table <- table(house_sales$view_miss, house_sales$bathrooms)
+prop.table(view_bath_table)
+```
+
+
+##Conclusion:
+##The proportion table shows the distribution of missing (view_miss = 1) and non-missing (view_miss = 0) view_quality values across different numbers of bathrooms. For homes with missing view quality (view_miss = 1), the majority have 2 or 3 bathrooms (35.8% and 37.7%, respectively), while 17% of homes with missing view quality have 1 bathroom. Homes with 4 or more bathrooms account for a significantly smaller proportion of missing values. In contrast, for homes without missing view quality (view_miss = 0), the distribution is more evenly spread across homes with 1 to 4 bathrooms, with smaller proportions compared to the missing group. Missing values are rare in homes with more than 4 bathrooms. This suggests that missing view quality is more likely in homes with 2 or 3 bathrooms and less common in homes with 4 or more bathrooms, indicating that the missingness may be informative and related to the number of bathrooms.
+
+##V2.
+##The proportion table shows the distribution of missing (view_miss = 1) and non-missing (view_miss = 0) view_quality values across different bathroom counts. For homes with missing view quality (view_miss = 1), the majority have 2 or 3 bathrooms. Homes with 4 or more bathrooms contribute a much smaller share to the missing category. In contrast, for homes without missing view quality (view_miss = 0), the distribution is more evenly spread across 1 to 4 bathrooms, with lower proportions than the missing group. Missing values are uncommon in homes with more than 4 bathrooms. This suggests that missing view quality is less prevalent in homes with 2 or 3 bathrooms and more frequent in homes with 4 or more bathrooms, implying that the missingness may be related to the number of bathrooms.
